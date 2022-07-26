@@ -1,0 +1,75 @@
+﻿@page "/videogame"
+@page "/videogame/{id:int}"
+@using BlazorServer.Data
+@inject IGameService GameService
+@inject SweetAlertService Swal
+
+@if (Id == null)
+{
+    <h3>Create a new video game</h3>
+}
+else
+{
+    <h3>Edit @game.Name</h3>
+}
+<EditForm Model="game" OnSubmit="HandleSubmit">
+    <div>
+        <label for="name">Name</label>
+        <InputText id="name" @bind-Value="game.Name" class="form-control"></InputText>
+    </div>
+    <div>
+        <label for="dev">Developer</label>
+        <InputText id="dev" @bind-Value="game.Developer" class="form-control"></InputText>
+    </div>
+    <div>
+        <label for="release">Release</label>
+        <InputDate id="release" @bind-Value="game.Release" class="form-control"></InputDate>
+    </div>
+    <button type="submit" class="m-2 btn btn-success">@btnText</button>
+    @if (Id != null)
+    {
+        <button type="button" class="m-2 btn btn-danger" @onclick="DeleteGame" >Delete</button>
+    }
+</EditForm>
+
+@code {
+    [Parameter]
+    public int? Id { get; set; }
+
+    Game game = new Game();
+
+    string btnText = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        btnText = Id == null ? "Save Game" : "Update Game";
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Id != null)
+        {
+            game = await GameService.GetSingleGame((int)Id);
+        }
+    }
+
+    async Task HandleSubmit()
+    {
+        if (Id == null)
+        {
+            await GameService.CreateGame(game);
+            await Swal.FireAsync("Created!","Video Game Created Succefully!", "success");
+        }
+        else
+        {
+            await GameService.UpdateGame(game, (int)Id);
+            await Swal.FireAsync("Updated!","Video Game Updated Succefully!", "success");
+        }
+    }
+
+    async Task DeleteGame()
+    {
+        await GameService.DeleteGame(game.Id);
+        await Swal.FireAsync("Deleted!",$"You will Delete the video game {game.Name}", "warning");
+    }
+}
